@@ -26,8 +26,27 @@
     <div class="intro-grid" data-parallax aria-hidden="true"></div>
     <div class="scanlines" aria-hidden="true"></div>
 
+    <!-- HUD cibernético profesional -->
+    <div class="intro-hud" aria-hidden="true">
+      <div class="hud-corner hud-tl"></div>
+      <div class="hud-corner hud-tr"></div>
+      <div class="hud-corner hud-bl"></div>
+      <div class="hud-corner hud-br"></div>
+      <div class="hud-badge hud-badge-l"><span class="hud-dot"></span> SYS.DIAG // ONLINE</div>
+      <div class="hud-badge hud-badge-r">MODULE: RM-V2.8</div>
+    </div>
+
+    <!-- Botón de sonido en pantalla de carga -->
+    <button id="introMuteBtn" class="intro-mute-btn" type="button" aria-label="Sonido activado" title="Sonido activado">🔊</button>
+
+    <!-- Cortinas de barrido de energía para transición lateral profesional -->
+    <div class="intro-wipe-layer layer-cyan" aria-hidden="true"></div>
+    <div class="intro-wipe-layer layer-magenta" aria-hidden="true"></div>
+    <div class="intro-wipe-laser" aria-hidden="true"></div>
+
     <div class="intro-inner">
       <div class="robot-wrap" data-parallax aria-hidden="true">
+        <div class="robot-aura" aria-hidden="true"></div>
         <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <linearGradient id="rbHead" x1="0" y1="0" x2="1" y2="1">
@@ -80,10 +99,13 @@
       <p class="intro-tagline"><b>Siente</b> · <b>Piensa</b> · <b>Actúa</b></p>
 
       <div class="boot">
+        <div class="boot-header">
+          <p id="bootText" class="boot-text">Iniciando…</p>
+          <span id="bootPct" class="boot-pct">0%</span>
+        </div>
         <div id="bootBar" class="boot-bar" role="progressbar" aria-label="Cargando sistema" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
           <i id="bootFill"></i>
         </div>
-        <p id="bootText" class="boot-text">Iniciando…</p>
       </div>
 
       <button id="startBtn" class="btn-start" type="button">
@@ -103,7 +125,10 @@
           <small>Gran Trivia de Robótica</small>
         </div>
       </div>
-      <div class="chip" id="playerCount">0 participantes</div>
+      <div class="topbar-right">
+        <button id="appMuteBtn" class="btn-mute" type="button" aria-label="Sonido activado" title="Sonido activado">🔊</button>
+        <div class="chip" id="playerCount">0 participantes</div>
+      </div>
     </header>
 
     <main class="layout">
