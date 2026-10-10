@@ -73,19 +73,7 @@
 
   /* ---------------------------------------------------------
      Preguntas (basadas en el guion de la presentación)
-     a = respuesta correcta · w = respuestas incorrectas · e = explicación
      --------------------------------------------------------- */
-  const CAT_ICONS = {
-    'Robots': '🤖',
-    'Arduino': '🧠',
-    'Cables': '🔌',
-    'Sensores': '👀',
-    'Motores': '⚙️',
-    'Programación': '💻',
-    'Todo junto': '🧩',
-    'El curso': '🎓'
-  };
-
   const QUESTIONS = [
     // --- Robots ---
     { cat: 'Robots', q: 'Un robot es una máquina que hace tres cosas. ¿Cuáles son?',
@@ -229,7 +217,6 @@
      --------------------------------------------------------- */
   const STORE_KEY = 'robotMakers.trivia.players.v1';
   const MAX_PLAYERS = 30;
-  const MEDALS = ['🥇', '🥈', '🥉'];
 
   const state = {
     started: false,
@@ -540,7 +527,7 @@
       if (pct >= 100) {
         clearInterval(bootTimer);
         bootTimer = 0;
-        els.bootText.textContent = '✔ Sistema listo';
+        els.bootText.textContent = 'Sistema listo';
         els.startBtn.classList.add('ready');
       }
     }, 90);
@@ -561,7 +548,7 @@
     const r = els.startBtn.getBoundingClientRect();
     fx.burst(r.left + r.width / 2, r.top + r.height / 2, 40);
 
-    setTimeout(() => { els.intro.hidden = true; }, 950);
+    setTimeout(() => { els.intro.hidden = true; }, 850);
   }
 
   /* ---------------------------------------------------------
@@ -600,7 +587,7 @@
   }
 
   function renderScoreboard(opts = {}) {
-    /* posiciones antes del cambio (para animar el reordenamiento) */
+    /* posiciones antes del cambio */
     const firstTops = new Map();
     $$('tr[data-id]', els.scoreBody).forEach((tr) => firstTops.set(tr.dataset.id, tr.getBoundingClientRect().top));
 
@@ -622,7 +609,7 @@
       tr.className = 'empty-row';
       const td = document.createElement('td');
       td.colSpan = 4;
-      td.textContent = 'Aún no hay participantes. ¡Registra al primero! 🚀';
+      td.textContent = 'Aún no hay participantes. ¡Registra al primero!';
       tr.append(td);
       frag.append(tr);
     }
@@ -635,7 +622,7 @@
 
       const tdRank = makeCell('c-rank');
       if (maxScore === 0) tdRank.textContent = '–';
-      else tdRank.textContent = (p.score > 0 && rank <= 3) ? MEDALS[rank - 1] : String(rank);
+      else tdRank.textContent = String(rank);
 
       const tdName = makeCell('c-name');
       tdName.textContent = p.name;
@@ -683,7 +670,7 @@
         }
       });
       if (moving.length) {
-        void els.scoreBody.offsetHeight; /* forzar reflow */
+        void els.scoreBody.offsetHeight;
         requestAnimationFrame(() => {
           moving.forEach((tr) => {
             tr.style.transition = 'transform .5s cubic-bezier(.22,1,.36,1)';
@@ -712,21 +699,21 @@
 
     if (!ranking.length) {
       key = 'none';
-      box.textContent = '👋 Registra a los participantes para empezar.';
+      box.textContent = 'Registra a los participantes para empezar.';
     } else if (maxScore <= 0) {
       key = 'zero';
-      box.textContent = '🤖 ¡Todos en 0! Suma +10 al primero que acierte.';
+      box.textContent = '¡Todos en 0! Suma +10 al primero que acierte.';
     } else {
       const leaders = ranking.filter((e) => e.rank === 1).map((e) => e.p.name);
       key = leaders.join('|') + '#' + maxScore;
       if (leaders.length === 1) {
         const s = document.createElement('strong');
         s.textContent = leaders[0];
-        box.append('👑 Va ganando: ', s, ' · ' + maxScore + ' pts');
+        box.append('Va ganando: ', s, ' · ' + maxScore + ' pts');
       } else {
         const s = document.createElement('strong');
         s.textContent = leaders.join(', ');
-        box.append('🤝 Empate arriba: ', s, ' · ' + maxScore + ' pts');
+        box.append('Empate arriba: ', s, ' · ' + maxScore + ' pts');
       }
     }
 
@@ -740,17 +727,17 @@
 
   function addPlayer(rawName) {
     const name = rawName.replace(/\s+/g, ' ').trim();
-    if (!name) { toast('Escribe un nombre primero ✍️', 'warn'); return false; }
-    if (state.players.length >= MAX_PLAYERS) { toast('Ya hay ' + MAX_PLAYERS + ' participantes 🙌', 'warn'); return false; }
+    if (!name) { toast('Escribe un nombre primero', 'warn'); return false; }
+    if (state.players.length >= MAX_PLAYERS) { toast('Ya hay ' + MAX_PLAYERS + ' participantes', 'warn'); return false; }
     const lower = name.toLocaleLowerCase('es');
     if (state.players.some((p) => p.name.toLocaleLowerCase('es') === lower)) {
-      toast('Ya existe un participante con ese nombre 👀', 'warn');
+      toast('Ya existe un participante con ese nombre', 'warn');
       return false;
     }
     state.players.push({ id: uid(), name: name.slice(0, 20), score: 0 });
     savePlayers();
     renderScoreboard();
-    toast('¡' + name.slice(0, 20) + ' se unió al concurso! 🚀', 'ok');
+    toast('¡' + name.slice(0, 20) + ' se unió al concurso!', 'ok');
     return true;
   }
 
@@ -778,11 +765,10 @@
      --------------------------------------------------------- */
   function drawQuestion() {
     if (state.deck.length === 0) {
-      if (state.cycles > 0) toast('¡Se acabaron las preguntas! Barajamos de nuevo 🔄', 'ok');
+      if (state.cycles > 0) toast('¡Se acabaron las preguntas! Barajamos de nuevo', 'ok');
       state.cycles++;
       state.deck = shuffle(QUESTIONS.map((_, i) => i));
       const n = state.deck.length;
-      /* la próxima carta (al final del mazo) no puede ser la última que salió */
       if (n > 1 && state.lastIndex !== null && state.deck[n - 1] === state.lastIndex) {
         const j = Math.floor(Math.random() * (n - 1));
         [state.deck[n - 1], state.deck[j]] = [state.deck[j], state.deck[n - 1]];
@@ -799,7 +785,7 @@
 
     els.qEmpty.hidden = true;
     els.qContent.hidden = false;
-    els.qCategory.textContent = (CAT_ICONS[q.cat] || '❓') + ' ' + q.cat;
+    els.qCategory.textContent = q.cat;
     els.qText.textContent = q.q;
     els.qExplain.hidden = true;
     els.qExplain.replaceChildren();
@@ -820,7 +806,6 @@
       els.qOptions.append(b);
     });
 
-    /* reiniciar la animación de entrada */
     els.qContent.style.animation = 'none';
     void els.qContent.offsetWidth;
     els.qContent.style.animation = '';
@@ -860,7 +845,7 @@
     });
 
     const strong = document.createElement('strong');
-    strong.textContent = '✅ Respuesta: ' + cur.q.a + '.';
+    strong.textContent = 'Respuesta: ' + cur.q.a + '.';
     const info = document.createElement('span');
     info.textContent = ' ' + cur.q.e;
     els.qExplain.replaceChildren(strong, info);
@@ -869,11 +854,11 @@
 
     if (choice !== null) {
       if (choice === correctIdx) {
-        toast('¡Correcto! 🎉', 'ok');
+        toast('¡Correcto!', 'ok');
         const r = els.qCard.getBoundingClientRect();
         fx.burst(r.left + r.width / 2, r.top + r.height / 2, 30);
       } else {
-        toast('¡Casi! Mira la respuesta correcta 👀', 'warn');
+        toast('¡Casi! Mira la respuesta correcta', 'warn');
       }
     }
   }
@@ -929,7 +914,6 @@
       const f = clamp((t - (lastT || t)) / 16.67, 0.2, 3);
       lastT = t;
 
-      /* ráfaga periódica desde las esquinas */
       if (t - lastBurst > 2200) {
         lastBurst = t;
         for (let i = 0; i < 70; i++) reset(pieces[Math.floor(Math.random() * pieces.length)], 'burst');
@@ -940,7 +924,7 @@
         const p = pieces[i];
         p.vy += 0.25 * f;
         p.vx *= Math.pow(0.992, f);
-        if (p.vy > 5) p.vy -= (p.vy - 5) * 0.1 * f; /* velocidad terminal suave */
+        if (p.vy > 5) p.vy -= (p.vy - 5) * 0.1 * f;
         p.wobble += p.wobbleSpeed * f;
         p.x += (p.vx + Math.sin(p.wobble) * 1.1) * f;
         p.y += p.vy * f;
@@ -968,7 +952,6 @@
       stop();
       resize();
       pieces = Array.from({ length: COUNT }, () => reset({}, 'burst'));
-      /* escalonar: parte del confeti entra como lluvia */
       pieces.forEach((p, i) => { if (i % 3 === 0) { reset(p, 'rain'); p.y = rand(-h, 0); } });
       running = true;
       lastT = 0;
@@ -992,7 +975,7 @@
      --------------------------------------------------------- */
   function finishContest() {
     if (!state.players.length) {
-      toast('Primero registra participantes 👾', 'warn');
+      toast('Primero registra participantes', 'warn');
       return;
     }
     const max = Math.max(...state.players.map((p) => p.score));
@@ -1015,7 +998,7 @@
       s.textContent = p.name;
       els.winnerNames.append(s);
     });
-    els.winnerScore.textContent = '⭐ ' + max + ' puntos ⭐';
+    els.winnerScore.textContent = max + ' puntos';
 
     els.podium.replaceChildren();
     ranking
@@ -1024,7 +1007,7 @@
         const li = document.createElement('li');
         li.style.setProperty('--i', String(i));
         const m = document.createElement('span');
-        m.textContent = MEDALS[e.rank - 1];
+        m.textContent = String(e.rank);
         const n = document.createElement('span');
         n.className = 'p-name';
         n.textContent = e.p.name;
@@ -1065,7 +1048,7 @@
     state.leaderKey = null;
     renderScoreboard();
     closeWinner();
-    toast('¡Nuevo concurso listo! Todos en 0 🚀', 'ok');
+    toast('¡Nuevo concurso listo! Todos en 0', 'ok');
   }
 
   /* ---------------------------------------------------------
@@ -1112,7 +1095,6 @@
       if (e.key === 'Escape') {
         closeWinner();
       } else if (e.key === 'Tab') {
-        /* mantener el foco dentro del diálogo */
         const first = els.keepPlayingBtn;
         const last = els.newContestBtn;
         if (e.shiftKey && document.activeElement === first) {
