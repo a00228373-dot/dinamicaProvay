@@ -5,6 +5,126 @@
   'use strict';
 
   /* ---------------------------------------------------------
+     Generador de Sonidos Futuristas (Web Audio API)
+     --------------------------------------------------------- */
+  const soundFx = (() => {
+    let ctx = null;
+    let muted = false;
+
+    function getContext() {
+      if (!ctx) {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx) ctx = new AudioCtx();
+      }
+      if (ctx && ctx.state === 'suspended') ctx.resume();
+      return ctx;
+    }
+
+    function toggleMute() {
+      muted = !muted;
+      return muted;
+    }
+
+    function isMuted() { return muted; }
+
+    // Click cibernético sutil
+    function click() {
+      if (muted) return;
+      const ac = getContext();
+      if (!ac) return;
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(750, ac.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(1100, ac.currentTime + 0.04);
+      gain.gain.setValueAtTime(0.06, ac.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.05);
+      osc.connect(gain);
+      gain.connect(ac.destination);
+      osc.start();
+      osc.stop(ac.currentTime + 0.05);
+    }
+
+    // Disparo / Láser futurista (al arrojar pregunta o confirmar acción)
+    function laser() {
+      if (muted) return;
+      const ac = getContext();
+      if (!ac) return;
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(580, ac.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(140, ac.currentTime + 0.16);
+      gain.gain.setValueAtTime(0.09, ac.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.16);
+      osc.connect(gain);
+      gain.connect(ac.destination);
+      osc.start();
+      osc.stop(ac.currentTime + 0.16);
+    }
+
+    // Arranque de energía / Encendido (Pantalla de carga -> Inicio)
+    function powerUp() {
+      if (muted) return;
+      const ac = getContext();
+      if (!ac) return;
+      const now = ac.currentTime;
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(120, now);
+      osc.frequency.exponentialRampToValueAtTime(920, now + 0.55);
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+      osc.connect(gain);
+      gain.connect(ac.destination);
+      osc.start(now);
+      osc.stop(now + 0.6);
+    }
+
+    // Éxito / Respuesta correcta (Acorde brillante ascendente)
+    function success() {
+      if (muted) return;
+      const ac = getContext();
+      if (!ac) return;
+      [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+        const now = ac.currentTime + i * 0.07;
+        const osc = ac.createOscillator();
+        const gain = ac.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now);
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+        osc.connect(gain);
+        gain.connect(ac.destination);
+        osc.start(now);
+        osc.stop(now + 0.22);
+      });
+    }
+
+    // Error / Respuesta incorrecta (Zumbido grave)
+    function error() {
+      if (muted) return;
+      const ac = getContext();
+      if (!ac) return;
+      const now = ac.currentTime;
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(140, now);
+      osc.frequency.setValueAtTime(95, now + 0.12);
+      gain.gain.setValueAtTime(0.1, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+      osc.connect(gain);
+      gain.connect(ac.destination);
+      osc.start(now);
+      osc.stop(now + 0.22);
+    }
+
+    return { toggleMute, isMuted, click, laser, powerUp, success, error };
+  })();
+
+  /* ---------------------------------------------------------
      Utilidades
      --------------------------------------------------------- */
   const $ = (sel, root = document) => root.querySelector(sel);
@@ -39,7 +159,10 @@
     bootBar: $('#bootBar'),
     bootFill: $('#bootFill'),
     bootText: $('#bootText'),
+    bootPct: $('#bootPct'),
     app: $('#app'),
+    introMuteBtn: $('#introMuteBtn'),
+    appMuteBtn: $('#appMuteBtn'),
 
     form: $('#registerForm'),
     nameInput: $('#nameInput'),
@@ -267,7 +390,8 @@
   }
 
   /* ---------------------------------------------------------
-     Fondo interactivo: partículas, estela, chispas, parallax
+     Fondo interactivo avanzado: nodos flotantes, física de fluidos,
+     ondas de choque, rayos de energía interactivos y cursor cinemático
      --------------------------------------------------------- */
   const fx = (() => {
     const canvas = $('#bg');
@@ -275,12 +399,21 @@
     const glow = $('#cursorGlow');
     const parallaxEls = $$('[data-parallax]');
     const COLORS = ['0,240,255', '255,43,214', '182,255,59', '255,216,74', '123,92,255'];
-    const LINK = 120;
-    const MOUSE_R = 150;
+    const TYPES = ['circle', 'diamond', 'cross', 'ring'];
+    const LINK = 135;
+    const INFLUENCE_R = 230;
 
-    const mouse = { x: -9999, y: -9999, active: false };
+    const mouse = {
+      x: -9999, y: -9999,
+      prevX: -9999, prevY: -9999,
+      vx: 0, vy: 0,
+      smoothVx: 0, smoothVy: 0,
+      speed: 0,
+      active: false
+    };
+
     let w = 0, h = 0, dpr = 1, raf = 0;
-    let particles = [], trail = [], sparks = [];
+    let particles = [], trail = [], sparks = [], ripples = [];
     let tpx = 0, tpy = 0, px = 0, py = 0, lastPx = 99, lastPy = 99;
     let gx = 0, gy = 0;
     let lastTrail = { x: -999, y: -999 };
@@ -288,20 +421,27 @@
     function makeParticle() {
       const c = pick(COLORS);
       const angle = rand(0, Math.PI * 2);
-      const speed = rand(0.15, 1) * (REDUCED ? 0.15 : 0.45);
+      const speed = rand(0.2, 0.75) * (REDUCED ? 0.2 : 0.48);
       const bx = Math.cos(angle) * speed;
       const by = Math.sin(angle) * speed;
+      const type = pick(TYPES);
+      const r = type === 'cross' ? rand(3.5, 6) : (type === 'diamond' ? rand(2.8, 5) : rand(1.6, 3.8));
       return {
-        x: rand(0, w), y: rand(0, h),
-        bx, by, vx: bx, vy: by,
-        r: rand(1.4, 3.2),
-        fill: 'rgba(' + c + ',.9)',
-        halo: 'rgba(' + c + ',.12)'
+        x: rand(0, w || 1000),
+        y: rand(0, h || 1000),
+        bx, by,
+        vx: bx, vy: by,
+        r,
+        c,
+        type,
+        rot: rand(0, Math.PI * 2),
+        vRot: rand(-0.02, 0.02),
+        glow: 0
       };
     }
 
     function targetCount() {
-      return REDUCED ? 28 : clamp(Math.round((w * h) / 15000), 36, 110);
+      return REDUCED ? 32 : clamp(Math.round((w * h) / 14000), 45, 120);
     }
 
     function resize() {
@@ -316,21 +456,61 @@
       if (particles.length > n) particles.length = n;
     }
 
-    function burst(x, y, n = 14) {
+    function burst(x, y, n = 18) {
       if (REDUCED) return;
       for (let i = 0; i < n; i++) {
         const a = rand(0, Math.PI * 2);
-        const s = rand(1.5, 5);
-        sparks.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 1, life: 1, c: pick(COLORS) });
+        const s = rand(2, 7.5);
+        sparks.push({
+          x, y,
+          vx: Math.cos(a) * s,
+          vy: Math.sin(a) * s - rand(0.5, 2),
+          life: 1,
+          c: pick(COLORS),
+          size: rand(1.5, 3.8)
+        });
       }
-      if (sparks.length > 220) sparks.splice(0, sparks.length - 220);
+      if (sparks.length > 250) sparks.splice(0, sparks.length - 250);
+    }
+
+    function ripple(x, y, c = '0,240,255', maxR = 300) {
+      if (REDUCED) return;
+      ripples.push({
+        x, y,
+        r: 6,
+        maxR,
+        speed: 7.5,
+        c,
+        alpha: 1
+      });
+      if (ripples.length > 8) ripples.shift();
     }
 
     function frame() {
       raf = requestAnimationFrame(frame);
       ctx.clearRect(0, 0, w, h);
 
-      /* parallax suave */
+      if (mouse.active) {
+        mouse.vx = mouse.x - mouse.prevX;
+        mouse.vy = mouse.y - mouse.prevY;
+        mouse.prevX = mouse.x;
+        mouse.prevY = mouse.y;
+
+        mouse.smoothVx += (mouse.vx - mouse.smoothVx) * 0.22;
+        mouse.smoothVy += (mouse.vy - mouse.smoothVy) * 0.22;
+        mouse.speed = Math.hypot(mouse.smoothVx, mouse.smoothVy);
+
+        if (!REDUCED) {
+          gx += (mouse.x - gx) * 0.18;
+          gy += (mouse.y - gy) * 0.18;
+          const angle = Math.atan2(mouse.smoothVy, mouse.smoothVx);
+          const stretch = Math.min(mouse.speed * 0.024, 0.65);
+          glow.style.transform = `translate3d(${(gx - 150).toFixed(1)}px, ${(gy - 150).toFixed(1)}px, 0) rotate(${angle.toFixed(3)}rad) scale(${(1 + stretch).toFixed(2)}, ${(1 - stretch * 0.35).toFixed(2)})`;
+        }
+      } else {
+        mouse.speed = 0;
+      }
+
       if (!REDUCED) {
         px += (tpx - px) * 0.07;
         py += (tpy - py) * 0.07;
@@ -342,36 +522,106 @@
           }
           lastPx = px; lastPy = py;
         }
-        if (mouse.active) {
-          gx += (mouse.x - gx) * 0.18;
-          gy += (mouse.y - gy) * 0.18;
-          glow.style.transform = 'translate3d(' + (gx - 150).toFixed(1) + 'px,' + (gy - 150).toFixed(1) + 'px,0)';
+      }
+
+      for (let i = ripples.length - 1; i >= 0; i--) {
+        const rip = ripples[i];
+        rip.r += rip.speed;
+        rip.alpha *= 0.955;
+        if (rip.alpha <= 0.02 || rip.r >= rip.maxR) {
+          ripples.splice(i, 1);
+          continue;
+        }
+        ctx.strokeStyle = `rgba(${rip.c}, ${(rip.alpha * 0.45).toFixed(3)})`;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(rip.x, rip.y, rip.r, 0, Math.PI * 2);
+        ctx.stroke();
+
+        if (rip.r > 20) {
+          ctx.strokeStyle = `rgba(${rip.c}, ${(rip.alpha * 0.18).toFixed(3)})`;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.arc(rip.x, rip.y, Math.max(0, rip.r - 18), 0, Math.PI * 2);
+          ctx.stroke();
         }
       }
 
-      /* partículas */
-      const R2 = MOUSE_R * MOUSE_R;
+      const nearNodes = [];
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
-        p.vx += (p.bx - p.vx) * 0.05;
-        p.vy += (p.by - p.vy) * 0.05;
+        p.rot += p.vRot;
+
         if (mouse.active) {
-          const dx = p.x - mouse.x, dy = p.y - mouse.y;
-          const d2 = dx * dx + dy * dy;
-          if (d2 < R2 && d2 > 1) {
-            const d = Math.sqrt(d2);
-            const f = (1 - d / MOUSE_R) * 0.3;
-            p.vx += (dx / d) * f;
-            p.vy += (dy / d) * f;
+          const dx = p.x - mouse.x;
+          const dy = p.y - mouse.y;
+          const d = Math.hypot(dx, dy) || 1;
+
+          if (d < INFLUENCE_R) {
+            const factor = 1 - d / INFLUENCE_R;
+            p.glow += (factor - p.glow) * 0.18;
+
+            if (d < 145) {
+              const push = Math.pow(1 - d / 145, 1.8) * 3.8;
+              p.vx += (dx / d) * push;
+              p.vy += (dy / d) * push;
+            }
+
+            const wake = factor * Math.min(mouse.speed, 35) * 0.14;
+            p.vx += mouse.smoothVx * wake;
+            p.vy += mouse.smoothVy * wake;
+
+            const swirl = factor * 0.55;
+            p.vx += (-dy / d) * swirl;
+            p.vy += (dx / d) * swirl;
+
+            nearNodes.push({ p, d });
+          } else {
+            p.glow *= 0.94;
+          }
+        } else {
+          p.glow *= 0.94;
+        }
+
+        for (let j = 0; j < ripples.length; j++) {
+          const rip = ripples[j];
+          const rdx = p.x - rip.x, rdy = p.y - rip.y;
+          const rd = Math.hypot(rdx, rdy) || 1;
+          const diff = Math.abs(rd - rip.r);
+          if (diff < 26) {
+            const ripForce = (1 - diff / 26) * (1 - rip.r / rip.maxR) * 4.6;
+            p.vx += (rdx / rd) * ripForce;
+            p.vy += (rdy / rd) * ripForce;
+            p.glow = Math.max(p.glow, 0.85);
           }
         }
+
+        p.vx += (p.bx - p.vx) * 0.038;
+        p.vy += (p.by - p.vy) * 0.038;
         p.x += p.vx;
         p.y += p.vy;
-        if (p.x < -10) p.x = w + 10; else if (p.x > w + 10) p.x = -10;
-        if (p.y < -10) p.y = h + 10; else if (p.y > h + 10) p.y = -10;
+
+        if (p.x < -20) p.x = w + 20; else if (p.x > w + 20) p.x = -20;
+        if (p.y < -20) p.y = h + 20; else if (p.y > h + 20) p.y = -20;
       }
 
-      /* conexiones entre partículas */
+      if (mouse.active && nearNodes.length > 0 && !REDUCED) {
+        nearNodes.sort((a, b) => a.d - b.d);
+        const maxRays = Math.min(nearNodes.length, 4);
+        for (let i = 0; i < maxRays; i++) {
+          const { p, d } = nearNodes[i];
+          const alpha = (1 - d / INFLUENCE_R) * 0.55;
+          ctx.strokeStyle = `rgba(${p.c}, ${alpha.toFixed(3)})`;
+          ctx.lineWidth = 1.4 * (1 - d / INFLUENCE_R) + 0.6;
+          ctx.beginPath();
+          const midX = (mouse.x + p.x) / 2 + (Math.random() - 0.5) * 4;
+          const midY = (mouse.y + p.y) / 2 + (Math.random() - 0.5) * 4;
+          ctx.moveTo(mouse.x, mouse.y);
+          ctx.quadraticCurveTo(midX, midY, p.x, p.y);
+          ctx.stroke();
+        }
+      }
+
       ctx.lineWidth = 1;
       for (let i = 0; i < particles.length; i++) {
         const a = particles[i];
@@ -382,7 +632,13 @@
           const dy = a.y - b.y;
           const d2 = dx * dx + dy * dy;
           if (d2 < LINK * LINK) {
-            ctx.strokeStyle = 'rgba(0,240,255,' + ((1 - Math.sqrt(d2) / LINK) * 0.22).toFixed(3) + ')';
+            const d = Math.sqrt(d2);
+            const excitement = Math.max(a.glow, b.glow);
+            const baseAlpha = (1 - d / LINK) * 0.18;
+            const finalAlpha = Math.min(0.9, baseAlpha + excitement * 0.45);
+            const strokeColor = excitement > 0.25 ? a.c : '0,240,255';
+            ctx.strokeStyle = `rgba(${strokeColor}, ${finalAlpha.toFixed(3)})`;
+            ctx.lineWidth = excitement > 0.3 ? 1.5 : 0.8;
             ctx.beginPath();
             ctx.moveTo(a.x, a.y);
             ctx.lineTo(b.x, b.y);
@@ -391,52 +647,75 @@
         }
       }
 
-      /* líneas hacia el cursor + dibujo de puntos */
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
-        if (mouse.active) {
-          const dx = p.x - mouse.x, dy = p.y - mouse.y;
-          const d = Math.sqrt(dx * dx + dy * dy);
-          if (d < 170) {
-            ctx.strokeStyle = 'rgba(255,43,214,' + ((1 - d / 170) * 0.5).toFixed(3) + ')';
-            ctx.beginPath();
-            ctx.moveTo(p.x, p.y);
-            ctx.lineTo(mouse.x, mouse.y);
-            ctx.stroke();
-          }
+        const g = p.glow;
+        const curR = p.r * (1 + g * 0.45);
+
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+
+        ctx.fillStyle = `rgba(${p.c}, ${(0.12 + g * 0.4).toFixed(3)})`;
+        ctx.beginPath();
+        ctx.arc(0, 0, curR * (2.8 + g * 1.5), 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = g > 0.4 ? '#ffffff' : `rgba(${p.c}, ${(0.85 + g * 0.15).toFixed(3)})`;
+        ctx.strokeStyle = `rgba(${p.c}, 0.9)`;
+
+        if (p.type === 'diamond') {
+          ctx.beginPath();
+          ctx.moveTo(0, -curR);
+          ctx.lineTo(curR, 0);
+          ctx.lineTo(0, curR);
+          ctx.lineTo(-curR, 0);
+          ctx.closePath();
+          ctx.fill();
+        } else if (p.type === 'cross') {
+          ctx.lineWidth = 1.6;
+          ctx.beginPath();
+          ctx.moveTo(-curR, 0); ctx.lineTo(curR, 0);
+          ctx.moveTo(0, -curR); ctx.lineTo(0, curR);
+          ctx.stroke();
+        } else if (p.type === 'ring') {
+          ctx.lineWidth = 1.4;
+          ctx.beginPath();
+          ctx.arc(0, 0, curR, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(0, 0, curR * 0.35, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          ctx.beginPath();
+          ctx.arc(0, 0, curR, 0, Math.PI * 2);
+          ctx.fill();
         }
-        ctx.fillStyle = p.halo;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r * 3.2, 0, 6.2832);
-        ctx.fill();
-        ctx.fillStyle = p.fill;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, 6.2832);
-        ctx.fill();
+
+        ctx.restore();
       }
 
-      /* estela del cursor y chispas */
       ctx.globalCompositeOperation = 'lighter';
       for (let i = trail.length - 1; i >= 0; i--) {
         const t = trail[i];
-        t.life -= 0.035;
+        t.life -= 0.032;
         if (t.life <= 0) { trail.splice(i, 1); continue; }
-        ctx.fillStyle = 'rgba(' + t.c + ',' + (t.life * 0.35).toFixed(3) + ')';
+        ctx.fillStyle = `rgba(${t.c}, ${(t.life * 0.45).toFixed(3)})`;
         ctx.beginPath();
-        ctx.arc(t.x, t.y, 2 + t.life * 7, 0, 6.2832);
+        ctx.arc(t.x, t.y, 2 + t.life * 7.5, 0, Math.PI * 2);
         ctx.fill();
       }
       for (let i = sparks.length - 1; i >= 0; i--) {
         const s = sparks[i];
-        s.vx *= 0.96;
-        s.vy = s.vy * 0.96 + 0.08;
+        s.vx *= 0.955;
+        s.vy = s.vy * 0.955 + 0.06;
         s.x += s.vx;
         s.y += s.vy;
-        s.life -= 0.02;
+        s.life -= 0.024;
         if (s.life <= 0) { sparks.splice(i, 1); continue; }
-        ctx.fillStyle = 'rgba(' + s.c + ',' + s.life.toFixed(3) + ')';
+        ctx.fillStyle = `rgba(${s.c}, ${s.life.toFixed(3)})`;
         ctx.beginPath();
-        ctx.arc(s.x, s.y, 1 + s.life * 3, 0, 6.2832);
+        ctx.arc(s.x, s.y, s.size * s.life, 0, Math.PI * 2);
         ctx.fill();
       }
       ctx.globalCompositeOperation = 'source-over';
@@ -454,18 +733,24 @@
       window.addEventListener('resize', resize);
 
       window.addEventListener('pointermove', (e) => {
+        if (!mouse.active) {
+          mouse.prevX = e.clientX;
+          mouse.prevY = e.clientY;
+          gx = e.clientX;
+          gy = e.clientY;
+        }
         mouse.x = e.clientX;
         mouse.y = e.clientY;
-        if (!mouse.active) { gx = e.clientX; gy = e.clientY; }
         mouse.active = true;
         tpx = (e.clientX / w - 0.5) * 2;
         tpy = (e.clientY / h - 0.5) * 2;
         if (e.pointerType === 'mouse') glow.classList.add('on');
+
         if (!REDUCED) {
           const dx = e.clientX - lastTrail.x, dy = e.clientY - lastTrail.y;
-          if (dx * dx + dy * dy > 36) {
+          if (dx * dx + dy * dy > 30) {
             trail.push({ x: e.clientX, y: e.clientY, life: 1, c: pick(COLORS) });
-            if (trail.length > 60) trail.shift();
+            if (trail.length > 70) trail.shift();
             lastTrail = { x: e.clientX, y: e.clientY };
           }
         }
@@ -476,7 +761,10 @@
       }, { passive: true });
       window.addEventListener('pointercancel', () => { mouse.active = false; }, { passive: true });
 
-      window.addEventListener('pointerdown', (e) => burst(e.clientX, e.clientY, 12), { passive: true });
+      window.addEventListener('pointerdown', (e) => {
+        burst(e.clientX, e.clientY, 16);
+        ripple(e.clientX, e.clientY, pick(COLORS), 260);
+      }, { passive: true });
 
       document.documentElement.addEventListener('mouseleave', () => {
         mouse.active = false;
@@ -490,7 +778,7 @@
       start();
     }
 
-    return { init, burst };
+    return { init, burst, ripple };
   })();
 
   /* Brillo que sigue al cursor dentro de cada panel */
@@ -505,32 +793,35 @@
   }
 
   /* ---------------------------------------------------------
-     Pantalla de carga
+     Pantalla de carga: telemetría de diagnóstico robótico profesional
      --------------------------------------------------------- */
   const BOOT_STEPS = [
-    'Despertando al Arduino…',
-    'Calibrando sensores…',
-    'Conectando cables…',
-    'Engrasando motores…',
-    'Cargando preguntas…'
+    '[01/05] Sincronizando núcleo Arduino Uno…',
+    '[02/05] Calibrando sensores ultrasónicos…',
+    '[03/05] Verificando servomotores y bus I2C…',
+    '[04/05] Cargando matriz de preguntas…',
+    '[05/05] Sistema en línea · Listo para el concurso'
   ];
   let bootTimer = 0;
 
   function runBoot() {
     let pct = 0;
     bootTimer = setInterval(() => {
-      pct = Math.min(100, pct + rand(2, 6));
-      els.bootFill.style.width = pct.toFixed(0) + '%';
-      els.bootBar.setAttribute('aria-valuenow', pct.toFixed(0));
+      pct = Math.min(100, pct + rand(2.2, 5.8));
+      const rounded = Math.round(pct);
+      els.bootFill.style.width = rounded + '%';
+      els.bootBar.setAttribute('aria-valuenow', rounded);
+      if (els.bootPct) els.bootPct.textContent = rounded + '%';
       const idx = Math.min(BOOT_STEPS.length - 1, Math.floor((pct / 100) * BOOT_STEPS.length));
       els.bootText.textContent = BOOT_STEPS[idx];
       if (pct >= 100) {
         clearInterval(bootTimer);
         bootTimer = 0;
-        els.bootText.textContent = 'Sistema listo';
+        els.bootText.textContent = '[100%] SISTEMA EN LÍNEA · LISTO';
+        if (els.bootPct) els.bootPct.textContent = '100%';
         els.startBtn.classList.add('ready');
       }
-    }, 90);
+    }, 75);
   }
 
   function startApp() {
@@ -538,17 +829,24 @@
     state.started = true;
     if (bootTimer) { clearInterval(bootTimer); bootTimer = 0; }
 
+    soundFx.powerUp();
+
     els.bootFill.style.width = '100%';
+    if (els.bootPct) els.bootPct.textContent = '100%';
+
+    const r = els.startBtn.getBoundingClientRect();
+    const cx = r.left + r.width / 2;
+    const cy = r.top + r.height / 2;
+    fx.burst(cx, cy, 45);
+    fx.ripple(cx, cy, '0,240,255', 460);
+
     els.intro.classList.add('leaving');
     els.app.removeAttribute('inert');
     els.app.classList.add('visible');
     document.body.classList.remove('no-scroll');
     window.scrollTo(0, 0);
 
-    const r = els.startBtn.getBoundingClientRect();
-    fx.burst(r.left + r.width / 2, r.top + r.height / 2, 40);
-
-    setTimeout(() => { els.intro.hidden = true; }, 850);
+    setTimeout(() => { els.intro.hidden = true; }, 950);
   }
 
   /* ---------------------------------------------------------
@@ -587,11 +885,9 @@
   }
 
   function renderScoreboard(opts = {}) {
-    /* posiciones antes del cambio */
     const firstTops = new Map();
     $$('tr[data-id]', els.scoreBody).forEach((tr) => firstTops.set(tr.dataset.id, tr.getBoundingClientRect().top));
 
-    /* conservar el foco del teclado */
     let restore = null;
     const active = document.activeElement;
     if (active && els.scoreBody.contains(active) && active.dataset && active.dataset.action) {
@@ -657,7 +953,6 @@
 
     els.scoreBody.replaceChildren(frag);
 
-    /* animación FLIP del reordenamiento */
     if (!REDUCED) {
       const moving = [];
       rows.forEach((tr, id) => {
@@ -818,6 +1113,7 @@
   function throwQuestion() {
     if (state.throwing) return;
     state.throwing = true;
+    soundFx.laser();
     els.throwBtn.disabled = true;
     els.revealBtn.disabled = true;
     els.qCard.classList.add('throwing');
@@ -854,10 +1150,12 @@
 
     if (choice !== null) {
       if (choice === correctIdx) {
+        soundFx.success();
         toast('¡Correcto!', 'ok');
         const r = els.qCard.getBoundingClientRect();
         fx.burst(r.left + r.width / 2, r.top + r.height / 2, 30);
       } else {
+        soundFx.error();
         toast('¡Casi! Mira la respuesta correcta', 'warn');
       }
     }
@@ -985,6 +1283,7 @@
     }
     const ranking = computeRanking();
     const winners = state.players.filter((p) => p.score === max);
+    soundFx.powerUp();
     openWinner(winners, max, ranking);
   }
 
@@ -1052,15 +1351,42 @@
   }
 
   /* ---------------------------------------------------------
-     Eventos
+     Eventos y Sonidos en Interacciones
      --------------------------------------------------------- */
+  function updateMuteButtons(isMuted) {
+    [els.introMuteBtn, els.appMuteBtn].forEach((btn) => {
+      if (!btn) return;
+      if (isMuted) {
+        btn.textContent = '🔇';
+        btn.classList.add('is-muted');
+        btn.setAttribute('aria-label', 'Sonido desactivado');
+        btn.title = 'Sonido desactivado';
+      } else {
+        btn.textContent = '🔊';
+        btn.classList.remove('is-muted');
+        btn.setAttribute('aria-label', 'Sonido activado');
+        btn.title = 'Sonido activado';
+      }
+    });
+  }
+
+  function handleMuteToggle() {
+    const muted = soundFx.toggleMute();
+    updateMuteButtons(muted);
+    if (!muted) soundFx.click();
+  }
+
   function bindEvents() {
     els.startBtn.addEventListener('click', startApp);
+
+    if (els.introMuteBtn) els.introMuteBtn.addEventListener('click', handleMuteToggle);
+    if (els.appMuteBtn) els.appMuteBtn.addEventListener('click', handleMuteToggle);
 
     els.form.addEventListener('submit', (e) => {
       e.preventDefault();
       if (addPlayer(els.nameInput.value)) {
         els.nameInput.value = '';
+        soundFx.click();
       }
       els.nameInput.focus({ preventScroll: true });
     });
@@ -1072,14 +1398,26 @@
       const id = tr && tr.dataset.id;
       if (!id) return;
       switch (btn.dataset.action) {
-        case 'plus': changeScore(id, 10); break;
-        case 'minus': changeScore(id, -10); break;
-        case 'remove': removePlayer(id); break;
+        case 'plus':
+          soundFx.click();
+          changeScore(id, 10);
+          break;
+        case 'minus':
+          soundFx.click();
+          changeScore(id, -10);
+          break;
+        case 'remove':
+          soundFx.click();
+          removePlayer(id);
+          break;
       }
     });
 
     els.throwBtn.addEventListener('click', throwQuestion);
-    els.revealBtn.addEventListener('click', () => revealAnswer(null));
+    els.revealBtn.addEventListener('click', () => {
+      soundFx.click();
+      revealAnswer(null);
+    });
     els.qOptions.addEventListener('click', (e) => {
       const opt = e.target.closest('.q-opt');
       if (!opt || opt.disabled) return;
@@ -1087,8 +1425,22 @@
     });
 
     els.finishBtn.addEventListener('click', finishContest);
-    els.keepPlayingBtn.addEventListener('click', closeWinner);
-    els.newContestBtn.addEventListener('click', newContest);
+    els.keepPlayingBtn.addEventListener('click', () => {
+      soundFx.click();
+      closeWinner();
+    });
+    els.newContestBtn.addEventListener('click', () => {
+      soundFx.click();
+      newContest();
+    });
+
+    // Sonido en clics generales de botones
+    document.addEventListener('click', (e) => {
+      const b = e.target.closest('button');
+      if (b && b !== els.startBtn && !b.dataset.action && b.id !== 'introMuteBtn' && b.id !== 'appMuteBtn') {
+        soundFx.click();
+      }
+    });
 
     document.addEventListener('keydown', (e) => {
       if (els.winner.hidden) return;
