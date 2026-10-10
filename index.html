@@ -6,10 +6,6 @@
   <meta name="theme-color" content="#060919">
   <meta name="description" content="Gran Trivia de Robótica · Robot Makers">
   <title>Robot Makers · Trivia</title>
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="no-scroll">
@@ -22,17 +18,6 @@
 
   <!-- ===== Fondo interactivo ===== -->
   <canvas id="bg" aria-hidden="true"></canvas>
-
-  <div class="floaters" data-parallax aria-hidden="true">
-    <span class="shape" style="--x:6%;--y:16%;--d:22px;--s:2.4rem;--t:7s"><i>⚙️</i></span>
-    <span class="shape" style="--x:88%;--y:12%;--d:30px;--s:2.2rem;--t:9s"><i>🦇</i></span>
-    <span class="shape" style="--x:92%;--y:62%;--d:16px;--s:2rem;--t:8s"><i>⚡</i></span>
-    <span class="shape" style="--x:4%;--y:70%;--d:34px;--s:2.6rem;--t:10s"><i>📡</i></span>
-    <span class="shape" style="--x:46%;--y:6%;--d:14px;--s:1.8rem;--t:6s"><i>🔩</i></span>
-    <span class="shape" style="--x:70%;--y:86%;--d:26px;--s:2.2rem;--t:8s"><i>🔋</i></span>
-    <span class="shape" style="--x:22%;--y:88%;--d:20px;--s:2rem;--t:7s"><i>💡</i></span>
-    <span class="shape" style="--x:60%;--y:40%;--d:12px;--s:1.6rem;--t:11s"><i>🧠</i></span>
-  </div>
 
   <div id="cursorGlow" class="cursor-glow" aria-hidden="true"></div>
 
@@ -126,7 +111,7 @@
       <!-- Preguntas -->
       <section class="panel question-panel" aria-labelledby="qTitle">
         <div class="panel-head">
-          <h2 id="qTitle">⚡ Zona de Preguntas</h2>
+          <h2 id="qTitle">Zona de Preguntas</h2>
           <span id="qCounter" class="chip">Lista para jugar</span>
         </div>
 
@@ -145,20 +130,20 @@
         </div>
 
         <div class="q-actions">
-          <button id="throwBtn" class="btn btn-throw" type="button">🎲 Arrojar Pregunta</button>
-          <button id="revealBtn" class="btn btn-reveal" type="button" disabled>👁️ Ver respuesta</button>
+          <button id="throwBtn" class="btn btn-throw" type="button">Arrojar Pregunta</button>
+          <button id="revealBtn" class="btn btn-reveal" type="button" disabled>Ver respuesta</button>
         </div>
       </section>
 
       <!-- Registro -->
       <section class="panel register-panel" aria-labelledby="regTitle">
         <div class="panel-head">
-          <h2 id="regTitle">🧑‍🚀 Registrar participante</h2>
+          <h2 id="regTitle">Registrar participante</h2>
         </div>
         <form id="registerForm" class="register-form" autocomplete="off" novalidate>
           <label for="nameInput" class="sr-only">Nombre del participante</label>
           <input id="nameInput" name="nombre" type="text" maxlength="20" placeholder="Escribe un nombre…" enterkeyhint="done">
-          <button class="btn btn-add" type="submit">➕ Registrar</button>
+          <button class="btn btn-add" type="submit">Registrar</button>
         </form>
         <p class="hint">Hasta 30 participantes. Los datos se guardan en este navegador.</p>
       </section>
@@ -166,11 +151,11 @@
       <!-- Marcador -->
       <section class="panel score-panel" aria-labelledby="scoreTitle">
         <div class="panel-head">
-          <h2 id="scoreTitle">🏆 Marcador</h2>
+          <h2 id="scoreTitle">Marcador</h2>
           <span class="chip chip-live"><span class="dot"></span> En vivo</span>
         </div>
 
-        <div id="leaderBanner" class="leader" role="status">👋 Registra a los participantes para empezar.</div>
+        <div id="leaderBanner" class="leader" role="status">Registra a los participantes para empezar.</div>
 
         <div class="table-wrap">
           <table class="score-table">
@@ -190,7 +175,7 @@
           </table>
         </div>
 
-        <button id="finishBtn" class="btn btn-finish" type="button">🏁 Terminar Concurso</button>
+        <button id="finishBtn" class="btn btn-finish" type="button">Terminar Concurso</button>
       </section>
 
     </main>
@@ -228,8 +213,8 @@
       <ol id="podium" class="podium"></ol>
 
       <div class="winner-actions">
-        <button id="keepPlayingBtn" class="btn btn-reveal" type="button">↩ Seguir jugando</button>
-        <button id="newContestBtn" class="btn btn-add" type="button">🔄 Nuevo concurso</button>
+        <button id="keepPlayingBtn" class="btn btn-reveal" type="button">Seguir jugando</button>
+        <button id="newContestBtn" class="btn btn-add" type="button">Nuevo concurso</button>
       </div>
     </div>
   </div>
