@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#060919">
+  <meta name="description" content="Gran Trivia de Robótica · Robot Makers">
+  <title>Robot Makers · Trivia</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="no-scroll">
+
+  <noscript>
+    <p style="position:fixed;inset:0;z-index:999;display:grid;place-items:center;background:#060919;color:#fff;font:700 1.4rem sans-serif;text-align:center;padding:20px">
+      Esta trivia necesita JavaScript para funcionar 🤖
+    </p>
+  </noscript>
+
+  <!-- ===== Fondo interactivo ===== -->
+  <canvas id="bg" aria-hidden="true"></canvas>
+
+  <div id="cursorGlow" class="cursor-glow" aria-hidden="true"></div>
+
+  <!-- ===== Pantalla de carga / bienvenida ===== -->
+  <section id="intro" class="intro" aria-labelledby="introTitle">
+    <div class="intro-grid" data-parallax aria-hidden="true"></div>
+    <div class="scanlines" aria-hidden="true"></div>
+
+    <!-- HUD cibernético profesional -->
+    <div class="intro-hud" aria-hidden="true">
+      <div class="hud-corner hud-tl"></div>
+      <div class="hud-corner hud-tr"></div>
+      <div class="hud-corner hud-bl"></div>
+      <div class="hud-corner hud-br"></div>
+      <div class="hud-badge hud-badge-l"><span class="hud-dot"></span> SYS.DIAG // ONLINE</div>
+      <div class="hud-badge hud-badge-r">MODULE: RM-V2.8</div>
+    </div>
+
+    <!-- Botón de sonido en pantalla de carga -->
+    <button id="introMuteBtn" class="intro-mute-btn" type="button" aria-label="Sonido activado" title="Sonido activado">🔊</button>
+
+    <!-- Cortinas de barrido de energía para transición lateral profesional -->
+    <div class="intro-wipe-layer layer-cyan" aria-hidden="true"></div>
+    <div class="intro-wipe-layer layer-magenta" aria-hidden="true"></div>
+    <div class="intro-wipe-laser" aria-hidden="true"></div>
+
+    <div class="intro-inner">
+      <div class="robot-wrap" data-parallax aria-hidden="true">
+        <div class="robot-aura" aria-hidden="true"></div>
+        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="rbHead" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#1b2a6b"/>
+              <stop offset="1" stop-color="#0b1233"/>
+            </linearGradient>
+          </defs>
+          <!-- antena -->
+          <line x1="100" y1="42" x2="100" y2="20" stroke="#00f0ff" stroke-width="4" stroke-linecap="round"/>
+          <circle class="antenna" cx="100" cy="14" r="7" fill="#ff2bd6"/>
+          <!-- orejas -->
+          <rect x="26" y="76" width="14" height="32" rx="6" fill="#00f0ff"/>
+          <rect x="160" y="76" width="14" height="32" rx="6" fill="#00f0ff"/>
+          <!-- cabeza -->
+          <rect x="40" y="42" width="120" height="98" rx="28" fill="url(#rbHead)" stroke="#00f0ff" stroke-width="4"/>
+          <!-- ojos -->
+          <g class="eye">
+            <rect x="56" y="62" width="38" height="38" rx="13" fill="#031026" stroke="#ff2bd6" stroke-width="3"/>
+            <g class="pupil">
+              <circle cx="75" cy="81" r="10" fill="#00f0ff"/>
+              <circle cx="71" cy="77" r="3" fill="#fff"/>
+            </g>
+          </g>
+          <g class="eye">
+            <rect x="106" y="62" width="38" height="38" rx="13" fill="#031026" stroke="#ff2bd6" stroke-width="3"/>
+            <g class="pupil">
+              <circle cx="125" cy="81" r="10" fill="#00f0ff"/>
+              <circle cx="121" cy="77" r="3" fill="#fff"/>
+            </g>
+          </g>
+          <!-- boca -->
+          <rect x="68" y="113" width="64" height="16" rx="8" fill="#031026" stroke="#b6ff3b" stroke-width="2"/>
+          <line x1="84" y1="115" x2="84" y2="127" stroke="#b6ff3b" stroke-width="2"/>
+          <line x1="100" y1="115" x2="100" y2="127" stroke="#b6ff3b" stroke-width="2"/>
+          <line x1="116" y1="115" x2="116" y2="127" stroke="#b6ff3b" stroke-width="2"/>
+          <!-- cuello y cuerpo -->
+          <rect x="84" y="140" width="32" height="10" fill="#00f0ff" opacity=".7"/>
+          <rect x="56" y="150" width="88" height="40" rx="14" fill="url(#rbHead)" stroke="#00f0ff" stroke-width="4"/>
+          <circle class="heart" cx="100" cy="170" r="8" fill="#b6ff3b"/>
+        </svg>
+      </div>
+
+      <p class="intro-kicker">▌ SISTEMA DE TRIVIA · NIVEL: AVENTURA</p>
+
+      <h1 id="introTitle" class="intro-title">
+        <span class="glitch t1" data-text="ROBOT">ROBOT</span>
+        <span class="glitch t2" data-text="MAKERS">MAKERS</span>
+      </h1>
+
+      <p class="intro-tagline"><b>Siente</b> · <b>Piensa</b> · <b>Actúa</b></p>
+
+      <div class="boot">
+        <div class="boot-header">
+          <p id="bootText" class="boot-text">Iniciando…</p>
+          <span id="bootPct" class="boot-pct">0%</span>
+        </div>
+        <div id="bootBar" class="boot-bar" role="progressbar" aria-label="Cargando sistema" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <i id="bootFill"></i>
+        </div>
+      </div>
+
+      <button id="startBtn" class="btn-start" type="button">
+        <span class="btn-start-icon" aria-hidden="true">▶</span>
+        <span>Haz click para empezar</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- ===== Aplicación ===== -->
+  <div id="app" class="app" inert>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-bot" aria-hidden="true">🤖</span>
+        <div>
+          <strong>ROBOT MAKERS</strong>
+          <small>Gran Trivia de Robótica</small>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <button id="appMuteBtn" class="btn-mute" type="button" aria-label="Sonido activado" title="Sonido activado">🔊</button>
+        <div class="chip" id="playerCount">0 participantes</div>
+      </div>
+    </header>
+
+    <main class="layout">
+
+      <!-- Preguntas -->
+      <section class="panel question-panel" aria-labelledby="qTitle">
+        <div class="panel-head">
+          <h2 id="qTitle">Zona de Preguntas</h2>
+          <span id="qCounter" class="chip">Lista para jugar</span>
+        </div>
+
+        <div id="questionCard" class="q-card" aria-live="polite">
+          <div id="qEmpty" class="q-empty">
+            <div class="q-empty-bot" aria-hidden="true">🤖</div>
+            <p>Presiona <strong>Arrojar Pregunta</strong><br>y que comience el desafío.</p>
+          </div>
+
+          <div id="qContent" class="q-content" hidden>
+            <span id="qCategory" class="q-cat"></span>
+            <p id="qText" class="q-text"></p>
+            <div id="qOptions" class="q-options" role="group" aria-label="Opciones de respuesta"></div>
+            <div id="qExplain" class="q-explain" hidden></div>
+          </div>
+        </div>
+
+        <div class="q-actions">
+          <button id="throwBtn" class="btn btn-throw" type="button">Arrojar Pregunta</button>
+          <button id="revealBtn" class="btn btn-reveal" type="button" disabled>Ver respuesta</button>
+        </div>
+      </section>
+
+      <!-- Registro -->
+      <section class="panel register-panel" aria-labelledby="regTitle">
+        <div class="panel-head">
+          <h2 id="regTitle">Registrar participante</h2>
+        </div>
+        <form id="registerForm" class="register-form" autocomplete="off" novalidate>
+          <label for="nameInput" class="sr-only">Nombre del participante</label>
+          <input id="nameInput" name="nombre" type="text" maxlength="20" placeholder="Escribe un nombre…" enterkeyhint="done">
+          <button class="btn btn-add" type="submit">Registrar</button>
+        </form>
+        <p class="hint">Hasta 30 participantes. Los datos se guardan en este navegador.</p>
+      </section>
+
+      <!-- Marcador -->
+      <section class="panel score-panel" aria-labelledby="scoreTitle">
+        <div class="panel-head">
+          <h2 id="scoreTitle">Marcador</h2>
+          <span class="chip chip-live"><span class="dot"></span> En vivo</span>
+        </div>
+
+        <div id="leaderBanner" class="leader" role="status">Registra a los participantes para empezar.</div>
+
+        <div class="table-wrap">
+          <table class="score-table">
+            <caption class="sr-only">Tabla de posiciones</caption>
+            <colgroup>
+              <col class="col-rank"><col class="col-name"><col class="col-score"><col class="col-actions">
+            </colgroup>
+            <thead>
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">Participante</th>
+                <th scope="col">Pts</th>
+                <th scope="col"><span class="sr-only">Acciones</span></th>
+              </tr>
+            </thead>
+            <tbody id="scoreBody"></tbody>
+          </table>
+        </div>
+
+        <button id="finishBtn" class="btn btn-finish" type="button">Terminar Concurso</button>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ===== Celebración del ganador ===== -->
+  <div id="winner" class="winner" role="dialog" aria-modal="true" aria-labelledby="winnerTitle" hidden>
+    <canvas id="confetti" aria-hidden="true"></canvas>
+
+    <div class="winner-card">
+      <div class="rays" aria-hidden="true"></div>
+
+      <svg class="trophy" viewBox="0 0 200 220" role="img" aria-label="Trofeo dorado" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#fff3b0"/>
+            <stop offset=".45" stop-color="#ffc400"/>
+            <stop offset="1" stop-color="#d98200"/>
+          </linearGradient>
+        </defs>
+        <path d="M50 38H24c0 44 16 62 40 68" fill="none" stroke="url(#gold)" stroke-width="11" stroke-linecap="round"/>
+        <path d="M150 38h26c0 44-16 62-40 68" fill="none" stroke="url(#gold)" stroke-width="11" stroke-linecap="round"/>
+        <path d="M48 20h104v60c0 38-23 62-52 62S48 118 48 80z" fill="url(#gold)"/>
+        <path d="M66 30h12v50c0 20 8 34 20 44-22-8-32-26-32-44z" fill="#fff" opacity=".35"/>
+        <polygon points="100,46 108,64 128,66 113,79 118,99 100,89 82,99 87,79 72,66 92,64" fill="#fff6c9" stroke="#d98200" stroke-width="2"/>
+        <rect x="89" y="140" width="22" height="34" fill="url(#gold)"/>
+        <path d="M62 174h76l10 26H52z" fill="url(#gold)"/>
+        <rect x="42" y="200" width="116" height="16" rx="5" fill="#b86a00"/>
+      </svg>
+
+      <div class="banner"><span id="winnerTitle">¡CAMPEÓN!</span></div>
+      <div id="winnerNames" class="winner-names"></div>
+      <div id="winnerScore" class="winner-score"></div>
+
+      <ol id="podium" class="podium"></ol>
+
+      <div class="winner-actions">
+        <button id="cinematicReplayDirectBtn" class="btn btn-reveal" type="button" style="border-color: var(--cyan); color: var(--cyan);">🎬 Ver Cinemática</button>
+        <button id="keepPlayingBtn" class="btn btn-reveal" type="button">Seguir jugando</button>
+        <button id="newContestBtn" class="btn btn-add" type="button">Nuevo concurso</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       CINEMÁTICA PROFESIONAL DE PELÍCULA (GRAN FINAL)
+       ========================================================= -->
+  <div id="cinematic" class="cinematic-overlay" hidden aria-modal="true" role="dialog" aria-label="Cinemática de Premiación">
+    <!-- Barras de encuadre cinematográfico anamórfico -->
+    <div class="cine-letterbox" aria-hidden="true">
+      <div class="cine-bar cine-bar-top"></div>
+      <div class="cine-bar cine-bar-bottom"></div>
+    </div>
+
+    <!-- Atmósfera cinemática: viñeta + partículas de polvo sutil -->
+    <div class="cine-vignette" aria-hidden="true"></div>
+    <div class="cine-dust" aria-hidden="true"></div>
+
+    <!-- ESCENA 1: EL SUSPENSO DEL GANADOR -->
+    <section id="cineWinnerPhase" class="cine-phase cine-phase-winner" aria-live="polite">
+      <div class="cine-brand-kicker">ROBOT MAKERS · RESOLUCIÓN OFICIAL</div>
+
+      <!-- Fase de Tensión / Análisis -->
+      <div class="cine-suspense" id="cineSuspenseBox">
+        <div class="cine-radar" aria-hidden="true"></div>
+        <p class="cine-suspense-title" id="cineSuspenseText">ANALIZANDO RESULTADOS DE LA DINÁMICA…</p>
+        <div class="cine-pulse-indicator" aria-hidden="true">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+
+      <!-- Revelación Impactante del Campeón -->
+      <div class="cine-reveal" id="cineRevealBox" hidden>
+        <div class="cine-flare" aria-hidden="true"></div>
+        <span class="cine-reveal-pre">EL GANADOR ABSOLUTO ES</span>
+        <h1 class="cine-champion-name" id="cineChampionName">CARLITOS</h1>
+        <div class="cine-champion-badge" id="cineChampionScore">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+          <span id="cineChampionPts">PUNTAJE MÁXIMO</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ESCENA 2: SUSPENSO DEL PREMIO SORPRESA -->
+    <section id="cineTeaserPhase" class="cine-phase cine-phase-teaser" hidden aria-live="polite">
+      <div class="cine-teaser-content">
+        <p class="cine-teaser-lead">PERO ESTO NO TERMINA AQUÍ…</p>
+        <h2 class="cine-teaser-heading">CONOZCAMOS TU PREMIO SORPRESA</h2>
+        <div class="cine-divider-glow" aria-hidden="true"></div>
+      </div>
+    </section>
+
+    <!-- ESCENA 3: EL DESPERTAR Y EL VIDEO CUADRADO -->
+    <section id="cineVideoPhase" class="cine-phase cine-phase-video" hidden>
+      <!-- Marco panorámico 16:9 con fundido cinematográfico y bordes blurred -->
+      <div class="cine-video-frame" id="cineVideoWrapper">
+        <video id="cineVideo" src="video.mp4" playsinline preload="auto">
+          <source src="video.mp4" type="video/mp4">
+        </video>
+        <div class="cine-frame-soft-edges" aria-hidden="true"></div>
+      </div>
+    </section>
+
+    <!-- ESCENA 4: DESTELLO RETRO CRT TV -->
+    <div id="cineFlashPhase" class="cine-crt-screen" aria-hidden="true" hidden>
+      <div class="crt-beam-line"></div>
+      <div class="crt-bloom-glow"></div>
+    </div>
+
+    <!-- ESCENA 5: LA FOTO DEL PREMIO MISTERIOSO FLOTANTE -->
+    <section id="cineJerseyPhase" class="cine-phase cine-phase-jersey" hidden title="Haz clic en cualquier parte para continuar">
+      <div class="jersey-cinema-card" id="jerseyCard">
+        <div class="jersey-ambient-glow" aria-hidden="true"></div>
+
+        <div class="jersey-photo-wrapper">
+          <img id="jerseyImg" class="jersey-photo" src="fotopremio.png" alt="Premio Misterioso">
+        </div>
+
+        <!-- Shade oscuro FUERA del wrapper para no mostrar el rectángulo -->
+        <div class="jersey-mystery-shade" aria-hidden="true"></div>
+
+        <!-- Símbolo ? brillante flotando en el centro -->
+        <div class="jersey-mystery-symbol" aria-label="Premio Secreto">
+          <span class="mystery-q">?</span>
+        </div>
+      </div>
+
+      <!-- Viñeta circular en el centro de pantalla para mayor profundidad -->
+      <div class="jersey-screen-vignette" aria-hidden="true"></div>
+    </section>
+
+
+  </div>
+
+
+
+  <!-- ===== Avisos ===== -->
+  <div id="toasts" class="toasts" role="status" aria-live="polite"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
